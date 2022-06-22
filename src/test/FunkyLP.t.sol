@@ -5,7 +5,7 @@ import "../FunkyLP.sol";
 
 import "@std/Test.sol";
 
-contract GreeterTest is Test {
+contract ZapComparisonTest is Test {
     using stdStorage for StdStorage;
 
     FunkyLP zap;
