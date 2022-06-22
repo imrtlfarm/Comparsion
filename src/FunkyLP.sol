@@ -2,9 +2,9 @@
 pragma solidity ^0.8.13;
 
 contract FunkyLP {
-    address private constant FACTORY = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
-    address private constant ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address private constant FACTORY = 0x152eE697f2E276fA89E96742e9bB9aB1F2E61bE3;
+    address private constant ROUTER = 0xF491e7B69E4244ad4002BC14e878a34207E38c29;
+    address private constant WETH = 0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83;
 
     function sqrt(uint y) private pure returns (uint z) {
         if (y > 3) {
@@ -31,8 +31,8 @@ contract FunkyLP {
     }
     
     //regular 50/50 swap
-    function getSwapAmount(uint r, uint a) public pure returns (uint) {
-        return (sqrt(r * (r * 3988009 + a * 3988000)) - r * 1997) / 1994;
+    function getSwapAmount(uint a) public pure returns (uint) {
+        return(a/2);
     }
 
     /* Optimal one-sided supply
@@ -42,7 +42,8 @@ contract FunkyLP {
     function zap(
         address _tokenA,
         address _tokenB,
-        uint _amountA
+        uint _amountA,
+        bool _type //true = funky. false= funky
     ) external {
         require(_tokenA == WETH || _tokenB == WETH, "!weth");
 
@@ -52,16 +53,21 @@ contract FunkyLP {
         (uint reserve0, uint reserve1, ) = IUniswapV2Pair(pair).getReserves();
 
         uint swapAmount;
-        if (IUniswapV2Pair(pair).token0() == _tokenA) {
-            // swap from token0 to token1
-            swapAmount = getFunkyAmount(reserve0, _amountA);
+        if (_type) {
+            if (IUniswapV2Pair(pair).token0() == _tokenA) {
+                // swap from token0 to token1
+                swapAmount = getFunkyAmount(reserve0, _amountA);
+            } else {
+                // swap from token1 to token0
+                swapAmount = getFunkyAmount(reserve1, _amountA);
+            }
         } else {
-            // swap from token1 to token0
-            swapAmount = getFunkyAmount(reserve1, _amountA);
+            swapAmount = getSwapAmount(_amountA);
         }
 
         _swap(_tokenA, _tokenB, swapAmount);
         _addLiquidity(_tokenA, _tokenB);
+        IERC20(pair).transfer(msg.sender, IERC20(pair).balanceOf(address(this)));
     }
 
     function _swap(
