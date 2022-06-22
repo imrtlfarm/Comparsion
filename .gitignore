@@ -1,6 +1,7 @@
 cache/
 out/
 node_modules/
+src/artifacts
 
 # Ignore Environment Variables!
 .env
